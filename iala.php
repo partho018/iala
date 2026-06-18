@@ -3,7 +3,7 @@
  * Plugin Name: IALA Simple Jobs Post
  * Plugin URI: https://pnscode.com
  * Description: A premium, simple, and responsive jobs post plugin featuring custom taxonomies, job details meta-boxes, a stunning frontend job board shortcode, and dynamic filtering.
- * Version: 1.1.7
+ * Version: 1.1.8
  * Author: Raju
  * Author URI: https://pnscode.com
  * License: GPL2
@@ -15,7 +15,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 }
 
 // Define Constants
-define( 'IALA_JOBS_VERSION', '1.1.7' );
+define( 'IALA_JOBS_VERSION', '1.1.8' );
 define( 'IALA_JOBS_PATH', plugin_dir_path( __FILE__ ) );
 define( 'IALA_JOBS_URL', plugin_dir_url( __FILE__ ) );
 
@@ -422,7 +422,7 @@ function iala_jobs_shortcode( $atts ) {
                                 <?php if ( ! empty( $job_cats ) && ! is_wp_error( $job_cats ) ) : ?>
                                     <div class="iala-job-card-categories" style="display: flex; gap: 5px; flex-wrap: wrap;">
                                         <?php foreach ( $job_cats as $cat ) : ?>
-                                            <span class="iala-job-category-badge"><?php echo esc_html( $cat->name ); ?></span>
+                                            <a href="<?php echo esc_url( get_term_link( $cat ) ); ?>" class="iala-job-category-badge"><?php echo esc_html( $cat->name ); ?></a>
                                         <?php endforeach; ?>
                                     </div>
                                 <?php endif; ?>

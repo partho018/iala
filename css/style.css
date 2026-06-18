@@ -218,6 +218,13 @@
     text-transform: uppercase;
     display: inline-block;
     line-height: 1.2;
+    text-decoration: none;
+    transition: all 0.2s ease;
+}
+
+.iala-job-category-badge:hover {
+    background-color: #4f46e5;
+    color: #ffffff !important;
 }
 
 .iala-job-title-new {
