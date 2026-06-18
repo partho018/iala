@@ -382,8 +382,14 @@
     color: var(--iala-text-main);
     background-color: #f8fafc;
     min-height: 100vh;
-    padding: 3rem 1rem;
+    padding: 3rem 8%;
     box-sizing: border-box;
+}
+
+@media (max-width: 768px) {
+    .iala-single-job-wrapper-new {
+        padding: 2rem 1.5rem;
+    }
 }
 
 .iala-single-job-container-new {
