@@ -3,7 +3,7 @@
  * Plugin Name: IALA Simple Jobs Post
  * Plugin URI: https://pnscode.com
  * Description: A premium, simple, and responsive jobs post plugin featuring custom taxonomies, job details meta-boxes, a stunning frontend job board shortcode, and dynamic filtering.
- * Version: 1.1.3
+ * Version: 1.1.4
  * Author: Raju
  * Author URI: https://pnscode.com
  * License: GPL2
@@ -15,7 +15,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 }
 
 // Define Constants
-define( 'IALA_JOBS_VERSION', '1.1.3' );
+define( 'IALA_JOBS_VERSION', '1.1.4' );
 define( 'IALA_JOBS_PATH', plugin_dir_path( __FILE__ ) );
 define( 'IALA_JOBS_URL', plugin_dir_url( __FILE__ ) );
 
@@ -158,6 +158,12 @@ function iala_jobs_meta_box_callback( $post ) {
     $job_location     = get_post_meta( $post->ID, '_job_location', true );
     $job_salary       = get_post_meta( $post->ID, '_job_salary', true );
     $job_apply_link   = get_post_meta( $post->ID, '_job_apply_link', true );
+    
+    $offer_types = get_post_meta( $post->ID, '_job_offer_types', true );
+    if ( ! is_array( $offer_types ) ) {
+        // Default to 'job' for new or existing listings
+        $offer_types = array( 'job' );
+    }
     ?>
     <div class="iala-jobs-meta-fields" style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; padding: 10px;">
         <p>
@@ -176,7 +182,21 @@ function iala_jobs_meta_box_callback( $post ) {
             <label style="display: block; font-weight: 600; margin-bottom: 5px;" for="iala_job_salary"><?php esc_html_e( 'Salary / Compensation', 'iala-jobs' ); ?></label>
             <input type="text" id="iala_job_salary" name="iala_job_salary" value="<?php echo esc_attr( $job_salary ); ?>" style="width: 100%; height: 35px; border-radius: 4px;" placeholder="e.g. $80k - $100k / year" />
         </p>
-        <p style="grid-column: span 2;">
+        <p style="grid-column: span 2; margin-bottom: 5px;">
+            <label style="display: block; font-weight: 600; margin-bottom: 8px;"><?php esc_html_e( 'Listing Offer Type', 'iala-jobs' ); ?></label>
+            <label style="margin-right: 20px; font-weight: 500; cursor: pointer;">
+                <input type="checkbox" name="iala_job_offer_types[]" value="job" <?php checked( in_array( 'job', $offer_types ) ); ?> style="margin-right: 5px; vertical-align: middle;" /> 
+                <span style="vertical-align: middle;"><?php esc_html_e( 'Job', 'iala-jobs' ); ?></span>
+            </label>
+            <label style="font-weight: 500; cursor: pointer;">
+                <input type="checkbox" name="iala_job_offer_types[]" value="internship" <?php checked( in_array( 'internship', $offer_types ) ); ?> style="margin-right: 5px; vertical-align: middle;" /> 
+                <span style="vertical-align: middle;"><?php esc_html_e( 'Internship', 'iala-jobs' ); ?></span>
+            </label>
+            <span class="description" style="display: block; margin-top: 5px; color: #64748b; font-size: 0.85rem;">
+                Select where this listing should be displayed. You can check both to show it on both the Jobs and Internships pages.
+            </span>
+        </p>
+        <p style="grid-column: span 2; margin-top: 0;">
             <label style="display: block; font-weight: 600; margin-bottom: 5px;" for="iala_job_apply_link"><?php esc_html_e( 'Application Email / URL', 'iala-jobs' ); ?></label>
             <input type="text" id="iala_job_apply_link" name="iala_job_apply_link" value="<?php echo esc_attr( $job_apply_link ); ?>" style="width: 100%; height: 35px; border-radius: 4px;" placeholder="e.g. jobs@pnscode.com or https://pnscode.com/apply" />
         </p>
@@ -218,6 +238,12 @@ function iala_jobs_save_meta_box_data( $post_id ) {
     if ( isset( $_POST['iala_job_apply_link'] ) ) {
         update_post_meta( $post_id, '_job_apply_link', sanitize_text_field( $_POST['iala_job_apply_link'] ) );
     }
+    if ( isset( $_POST['iala_job_offer_types'] ) && is_array( $_POST['iala_job_offer_types'] ) ) {
+        $offer_types = array_map( 'sanitize_text_field', $_POST['iala_job_offer_types'] );
+        update_post_meta( $post_id, '_job_offer_types', $offer_types );
+    } else {
+        update_post_meta( $post_id, '_job_offer_types', array() );
+    }
 }
 add_action( 'save_post', 'iala_jobs_save_meta_box_data' );
 
@@ -240,6 +266,7 @@ function iala_jobs_shortcode( $atts ) {
     
     $atts = shortcode_atts( array(
         'posts_per_page' => $default_posts_per_page,
+        'offer_type'     => '', // 'job' or 'internship'
     ), $atts, 'iala_jobs' );
 
     $card_design_type = get_option( 'iala_jobs_card_design_type', 'default' );
@@ -262,6 +289,20 @@ function iala_jobs_shortcode( $atts ) {
         $paged = get_query_var( 'page' );
     }
 
+    // Determine offer type from attribute or current page context
+    $offer_type = sanitize_text_field( $atts['offer_type'] );
+    if ( empty( $offer_type ) ) {
+        $current_page_id = get_the_ID();
+        $board_page_id = get_option( 'iala_jobs_board_page_id', 0 );
+        $internships_page_id = get_option( 'iala_jobs_internships_page_id', 0 );
+
+        if ( ! empty( $board_page_id ) && $current_page_id == $board_page_id ) {
+            $offer_type = 'job';
+        } elseif ( ! empty( $internships_page_id ) && $current_page_id == $internships_page_id ) {
+            $offer_type = 'internship';
+        }
+    }
+
     // Query Jobs
     $args = array(
         'post_type'      => 'job_listing',
@@ -269,6 +310,30 @@ function iala_jobs_shortcode( $atts ) {
         'paged'          => $paged,
         'post_status'    => 'publish',
     );
+
+    // Apply offer type filters (meta_query)
+    if ( $offer_type === 'job' ) {
+        $args['meta_query'] = array(
+            'relation' => 'OR',
+            array(
+                'key'     => '_job_offer_types',
+                'value'   => '"job"',
+                'compare' => 'LIKE',
+            ),
+            array(
+                'key'     => '_job_offer_types',
+                'compare' => 'NOT EXISTS',
+            ),
+        );
+    } elseif ( $offer_type === 'internship' ) {
+        $args['meta_query'] = array(
+            array(
+                'key'     => '_job_offer_types',
+                'value'   => '"internship"',
+                'compare' => 'LIKE',
+            ),
+        );
+    }
 
     // Apply search filter if query parameter exists
     if ( ! empty( $_GET['job_search'] ) ) {
@@ -520,6 +585,9 @@ add_filter( 'archive_template', 'iala_jobs_archive_template_override' );
 /**
  * 6e. Automatically render Job Board on the selected board page
  */
+/**
+ * 6e. Automatically render Job Board on the selected board page / internships page
+ */
 function iala_jobs_auto_render_board_page( $content ) {
     static $rendering = false;
     if ( $rendering ) {
@@ -537,6 +605,9 @@ function iala_jobs_auto_render_board_page( $content ) {
     }
 
     $board_page_id = get_option( 'iala_jobs_board_page_id', 0 );
+    $internships_page_id = get_option( 'iala_jobs_internships_page_id', 0 );
+
+    // Jobs Board page context
     if ( ! empty( $board_page_id ) && is_page( $board_page_id ) && in_the_loop() && is_main_query() ) {
         $board_design_type = get_option( 'iala_jobs_board_design_type', 'default' );
         $board_elementor_template = get_option( 'iala_jobs_board_elementor_template', 0 );
@@ -548,26 +619,52 @@ function iala_jobs_auto_render_board_page( $content ) {
             return $output;
         } else {
             $rendering = true;
-            $output = do_shortcode( '[iala_jobs]' );
+            $output = do_shortcode( '[iala_jobs offer_type="job"]' );
             $rendering = false;
             return $output;
         }
     }
+
+    // Internships Board page context
+    if ( ! empty( $internships_page_id ) && is_page( $internships_page_id ) && in_the_loop() && is_main_query() ) {
+        $internships_design_type = get_option( 'iala_jobs_internships_design_type', 'default' );
+        $internships_elementor_template = get_option( 'iala_jobs_internships_elementor_template', 0 );
+
+        if ( $internships_design_type === 'elementor' && ! empty( $internships_elementor_template ) ) {
+            $rendering = true;
+            $output = iala_jobs_render_elementor_template( $internships_elementor_template );
+            $rendering = false;
+            return $output;
+        } else {
+            $rendering = true;
+            $output = do_shortcode( '[iala_jobs offer_type="internship"]' );
+            $rendering = false;
+            return $output;
+        }
+    }
+
     return $content;
 }
 add_filter( 'the_content', 'iala_jobs_auto_render_board_page' );
 
 /**
- * 6f. Filter term links to redirect to the selected Jobs Board page with query parameters
+ * 6f. Filter term links to redirect to the selected Jobs / Internships Board page with query parameters
  */
 function iala_jobs_filter_term_links( $link, $term, $taxonomy ) {
     if ( $taxonomy === 'job_category' || $taxonomy === 'job_type' ) {
         $board_page_id = get_option( 'iala_jobs_board_page_id', 0 );
-        if ( ! empty( $board_page_id ) ) {
-            $board_page_url = get_permalink( $board_page_id );
-            if ( $board_page_url ) {
+        $internships_page_id = get_option( 'iala_jobs_internships_page_id', 0 );
+
+        $target_page_id = $board_page_id;
+        if ( ! empty( $internships_page_id ) && is_page( $internships_page_id ) ) {
+            $target_page_id = $internships_page_id;
+        }
+
+        if ( ! empty( $target_page_id ) ) {
+            $target_page_url = get_permalink( $target_page_id );
+            if ( $target_page_url ) {
                 $param = ( $taxonomy === 'job_category' ) ? 'iala_cat' : 'iala_type';
-                return add_query_arg( $param, $term->slug, $board_page_url );
+                return add_query_arg( $param, $term->slug, $target_page_url );
             }
         }
     }
@@ -784,6 +881,9 @@ function iala_jobs_settings_page_callback() {
         update_option( 'iala_jobs_board_page_id', intval( $_POST['iala_jobs_board_page_id'] ) );
         update_option( 'iala_jobs_board_design_type', sanitize_text_field( $_POST['iala_jobs_board_design_type'] ) );
         update_option( 'iala_jobs_board_elementor_template', intval( $_POST['iala_jobs_board_elementor_template'] ) );
+        update_option( 'iala_jobs_internships_page_id', intval( $_POST['iala_jobs_internships_page_id'] ) );
+        update_option( 'iala_jobs_internships_design_type', sanitize_text_field( $_POST['iala_jobs_internships_design_type'] ) );
+        update_option( 'iala_jobs_internships_elementor_template', intval( $_POST['iala_jobs_internships_elementor_template'] ) );
         echo '<div class="notice notice-success is-dismissible"><p>' . esc_html__( 'Settings saved successfully.', 'iala-jobs' ) . '</p></div>';
     }
 
@@ -795,6 +895,9 @@ function iala_jobs_settings_page_callback() {
     $board_page_id = get_option( 'iala_jobs_board_page_id', 0 );
     $board_design_type = get_option( 'iala_jobs_board_design_type', 'default' );
     $board_elementor_template = get_option( 'iala_jobs_board_elementor_template', 0 );
+    $internships_page_id = get_option( 'iala_jobs_internships_page_id', 0 );
+    $internships_design_type = get_option( 'iala_jobs_internships_design_type', 'default' );
+    $internships_elementor_template = get_option( 'iala_jobs_internships_elementor_template', 0 );
     $wp_pages = get_pages();
 
     $elementor_templates = array();
@@ -962,6 +1065,71 @@ function iala_jobs_settings_page_callback() {
                 </table>
             </div>
 
+            <!-- Internships Board Page Settings Section -->
+            <div class="iala-settings-section" style="background: #ffffff; padding: 25px; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); margin-bottom: 25px; max-width: 800px; border: 1px solid #e2e8f0;">
+                <h2 style="margin-top: 0; font-size: 1.4rem; border-bottom: 1px solid #e2e8f0; padding-bottom: 12px; color: #0f172a;"><?php esc_html_e( 'Internships Board Page Settings', 'iala-jobs' ); ?></h2>
+                
+                <table class="form-table" role="presentation" style="width: 100%; border-collapse: collapse; margin-top: 15px;">
+                    <tr>
+                        <th scope="row" style="width: 30%; font-weight: 600; padding: 15px 10px 15px 0; vertical-align: top; text-align: left;">
+                            <label for="iala_jobs_internships_page_id"><?php esc_html_e( 'Select Internships Board Page', 'iala-jobs' ); ?></label>
+                        </th>
+                        <td style="padding: 15px 10px;">
+                            <?php if ( ! empty( $wp_pages ) ) : ?>
+                                <select id="iala_jobs_internships_page_id" name="iala_jobs_internships_page_id" style="width: 100%; max-width: 400px; height: 40px; border-radius: 6px; border: 1px solid #cbd5e1;">
+                                    <option value="0"><?php esc_html_e( '— Select a Page —', 'iala-jobs' ); ?></option>
+                                    <?php foreach ( $wp_pages as $page ) : ?>
+                                        <option value="<?php echo esc_attr( $page->ID ); ?>" <?php selected( $internships_page_id, $page->ID ); ?>><?php echo esc_html( $page->post_title ); ?></option>
+                                    <?php endforeach; ?>
+                                </select>
+                            <?php else : ?>
+                                <p style="color: #ef4444; font-weight: 500;">
+                                    <?php esc_html_e( 'No WordPress pages found. Please create one under Pages -> Add New first.', 'iala-jobs' ); ?>
+                                </p>
+                            <?php endif; ?>
+                            <p class="description" style="color: #64748b; margin-top: 8px; font-size: 0.9rem;">
+                                Select the page where the Internships Board should be automatically displayed.
+                            </p>
+                        </td>
+                    </tr>
+                    
+                    <tr>
+                        <th scope="row" style="width: 30%; font-weight: 600; padding: 15px 10px 15px 0; vertical-align: top; text-align: left;">
+                            <label for="iala_jobs_internships_design_type"><?php esc_html_e( 'Internships Board Design Option', 'iala-jobs' ); ?></label>
+                        </th>
+                        <td style="padding: 15px 10px;">
+                            <select id="iala_jobs_internships_design_type" name="iala_jobs_internships_design_type" style="width: 100%; max-width: 400px; height: 40px; border-radius: 6px; border: 1px solid #cbd5e1;" onchange="toggleInternshipsTemplateSelect(this.value)">
+                                <option value="default" <?php selected( $internships_design_type, 'default' ); ?>><?php esc_html_e( 'Built-in Premium Internships Board', 'iala-jobs' ); ?></option>
+                                <option value="elementor" <?php selected( $internships_design_type, 'elementor' ); ?>><?php esc_html_e( 'Custom Elementor Template', 'iala-jobs' ); ?></option>
+                            </select>
+                            <p class="description" style="color: #64748b; margin-top: 8px; font-size: 0.9rem;">
+                                Select if you want to use the default layout or a custom layout designed in Elementor for Internships.
+                            </p>
+                        </td>
+                    </tr>
+                    
+                    <tr id="internships-template-row" style="<?php echo $internships_design_type === 'elementor' ? '' : 'display: none;'; ?>">
+                        <th scope="row" style="width: 30%; font-weight: 600; padding: 15px 10px 15px 0; vertical-align: top; text-align: left;">
+                            <label for="iala_jobs_internships_elementor_template"><?php esc_html_e( 'Select Elementor Template', 'iala-jobs' ); ?></label>
+                        </th>
+                        <td style="padding: 15px 10px;">
+                            <?php if ( ! empty( $elementor_templates ) ) : ?>
+                                <select id="iala_jobs_internships_elementor_template" name="iala_jobs_internships_elementor_template" style="width: 100%; max-width: 400px; height: 40px; border-radius: 6px; border: 1px solid #cbd5e1;">
+                                    <option value="0"><?php esc_html_e( '— Select a Template —', 'iala-jobs' ); ?></option>
+                                    <?php foreach ( $elementor_templates as $tmpl ) : ?>
+                                        <option value="<?php echo esc_attr( $tmpl->ID ); ?>" <?php selected( $internships_elementor_template, $tmpl->ID ); ?>><?php echo esc_html( $tmpl->post_title ); ?></option>
+                                    <?php endforeach; ?>
+                                </select>
+                            <?php else : ?>
+                                <p style="color: #ef4444; font-weight: 500;">
+                                    <?php esc_html_e( 'No Elementor templates found. Please create one under Templates -> Saved Templates first.', 'iala-jobs' ); ?>
+                                </p>
+                            <?php endif; ?>
+                        </td>
+                    </tr>
+                </table>
+            </div>
+
             <!-- New Pagination Settings Section -->
             <div class="iala-settings-section" style="background: #ffffff; padding: 25px; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); margin-bottom: 25px; max-width: 800px; border: 1px solid #e2e8f0;">
                 <h2 style="margin-top: 0; font-size: 1.4rem; border-bottom: 1px solid #e2e8f0; padding-bottom: 12px; color: #0f172a;"><?php esc_html_e( 'Jobs Board Pagination Settings', 'iala-jobs' ); ?></h2>
@@ -1017,6 +1185,14 @@ function iala_jobs_settings_page_callback() {
         }
         function toggleBoardTemplateSelect(val) {
             var row = document.getElementById('board-template-row');
+            if (val === 'elementor') {
+                row.style.display = '';
+            } else {
+                row.style.display = 'none';
+            }
+        }
+        function toggleInternshipsTemplateSelect(val) {
+            var row = document.getElementById('internships-template-row');
             if (val === 'elementor') {
                 row.style.display = '';
             } else {

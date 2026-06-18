@@ -440,9 +440,14 @@ class IALA_Job_Search_Widget extends \Elementor\Widget_Base {
 		// If redirect URL is provided, use it; otherwise fallback to Selected Jobs Board Page URL or current page URL
 		$redirect_url = ! empty( $settings['redirect_url'] ) ? esc_url( $settings['redirect_url'] ) : '';
 		if ( empty( $redirect_url ) ) {
-			$board_page_id = get_option( 'iala_jobs_board_page_id', 0 );
-			if ( ! empty( $board_page_id ) ) {
-				$redirect_url = get_permalink( $board_page_id );
+			$internships_page_id = get_option( 'iala_jobs_internships_page_id', 0 );
+			if ( ! empty( $internships_page_id ) && is_page( $internships_page_id ) ) {
+				$redirect_url = get_permalink( $internships_page_id );
+			} else {
+				$board_page_id = get_option( 'iala_jobs_board_page_id', 0 );
+				if ( ! empty( $board_page_id ) ) {
+					$redirect_url = get_permalink( $board_page_id );
+				}
 			}
 			if ( empty( $redirect_url ) ) {
 				$redirect_url = esc_url( home_url( add_query_arg( null, null ) ) );
