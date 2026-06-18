@@ -208,15 +208,16 @@
 }
 
 .iala-job-category-badge {
-    background-color: #f8f8f8;
-    /* Light brand orange-red tint */
-    color: #000000;
-    /* Brand orange-red color */
-    padding: 0.3rem 0.65rem;
+    background-color: #f1f5f9;
+    color: #4f46e5;
+    padding: 0.25rem 0.6rem;
     border-radius: 4px;
-    font-size: 0.78rem;
+    font-size: 0.72rem;
     font-weight: 600;
-    letter-spacing: 0.01em;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    display: inline-block;
+    line-height: 1.2;
 }
 
 .iala-job-title-new {
