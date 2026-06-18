@@ -3,7 +3,7 @@
  * Plugin Name: IALA Simple Jobs Post
  * Plugin URI: https://pnscode.com
  * Description: A premium, simple, and responsive jobs post plugin featuring custom taxonomies, job details meta-boxes, a stunning frontend job board shortcode, and dynamic filtering.
- * Version: 1.1.4
+ * Version: 1.1.5
  * Author: Raju
  * Author URI: https://pnscode.com
  * License: GPL2
@@ -15,7 +15,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 }
 
 // Define Constants
-define( 'IALA_JOBS_VERSION', '1.1.4' );
+define( 'IALA_JOBS_VERSION', '1.1.5' );
 define( 'IALA_JOBS_PATH', plugin_dir_path( __FILE__ ) );
 define( 'IALA_JOBS_URL', plugin_dir_url( __FILE__ ) );
 
@@ -192,9 +192,6 @@ function iala_jobs_meta_box_callback( $post ) {
                 <input type="checkbox" name="iala_job_offer_types[]" value="internship" <?php checked( in_array( 'internship', $offer_types ) ); ?> style="margin-right: 5px; vertical-align: middle;" /> 
                 <span style="vertical-align: middle;"><?php esc_html_e( 'Internship', 'iala-jobs' ); ?></span>
             </label>
-            <span class="description" style="display: block; margin-top: 5px; color: #64748b; font-size: 0.85rem;">
-                Select where this listing should be displayed. You can check both to show it on both the Jobs and Internships pages.
-            </span>
         </p>
         <p style="grid-column: span 2; margin-top: 0;">
             <label style="display: block; font-weight: 600; margin-bottom: 5px;" for="iala_job_apply_link"><?php esc_html_e( 'Application Email / URL', 'iala-jobs' ); ?></label>
