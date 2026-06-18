@@ -3,7 +3,7 @@
  * Plugin Name: IALA Simple Jobs Post
  * Plugin URI: https://pnscode.com
  * Description: A premium, simple, and responsive jobs post plugin featuring custom taxonomies, job details meta-boxes, a stunning frontend job board shortcode, and dynamic filtering.
- * Version: 1.1.1
+ * Version: 1.1.2
  * Author: Raju
  * Author URI: https://pnscode.com
  * License: GPL2
@@ -15,7 +15,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 }
 
 // Define Constants
-define( 'IALA_JOBS_VERSION', '1.1.1' );
+define( 'IALA_JOBS_VERSION', '1.1.2' );
 define( 'IALA_JOBS_PATH', plugin_dir_path( __FILE__ ) );
 define( 'IALA_JOBS_URL', plugin_dir_url( __FILE__ ) );
 
@@ -521,12 +521,19 @@ add_filter( 'archive_template', 'iala_jobs_archive_template_override' );
  * 6e. Automatically render Job Board on the selected board page
  */
 function iala_jobs_auto_render_board_page( $content ) {
+    static $rendering = false;
+    if ( $rendering ) {
+        return $content;
+    }
+
     if ( is_admin() ) {
         return $content;
     }
 
-    if ( class_exists( '\Elementor\Plugin' ) && \Elementor\Plugin::instance()->editor && \Elementor\Plugin::instance()->editor->is_edit_mode() ) {
-        return $content;
+    if ( class_exists( '\Elementor\Plugin' ) ) {
+        if ( \Elementor\Plugin::instance()->editor->is_edit_mode() || \Elementor\Plugin::instance()->preview->is_preview_mode() || isset( $_GET['elementor-preview'] ) ) {
+            return $content;
+        }
     }
 
     $board_page_id = get_option( 'iala_jobs_board_page_id', 0 );
@@ -535,9 +542,15 @@ function iala_jobs_auto_render_board_page( $content ) {
         $board_elementor_template = get_option( 'iala_jobs_board_elementor_template', 0 );
 
         if ( $board_design_type === 'elementor' && ! empty( $board_elementor_template ) ) {
-            return iala_jobs_render_elementor_template( $board_elementor_template );
+            $rendering = true;
+            $output = iala_jobs_render_elementor_template( $board_elementor_template );
+            $rendering = false;
+            return $output;
         } else {
-            return do_shortcode( '[iala_jobs]' );
+            $rendering = true;
+            $output = do_shortcode( '[iala_jobs]' );
+            $rendering = false;
+            return $output;
         }
     }
     return $content;
