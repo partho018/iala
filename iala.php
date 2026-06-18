@@ -3,7 +3,7 @@
  * Plugin Name: IALA Simple Jobs Post
  * Plugin URI: https://pnscode.com
  * Description: A premium, simple, and responsive jobs post plugin featuring custom taxonomies, job details meta-boxes, a stunning frontend job board shortcode, and dynamic filtering.
- * Version: 1.1.5
+ * Version: 1.1.6
  * Author: Raju
  * Author URI: https://pnscode.com
  * License: GPL2
@@ -15,7 +15,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 }
 
 // Define Constants
-define( 'IALA_JOBS_VERSION', '1.1.5' );
+define( 'IALA_JOBS_VERSION', '1.1.6' );
 define( 'IALA_JOBS_PATH', plugin_dir_path( __FILE__ ) );
 define( 'IALA_JOBS_URL', plugin_dir_url( __FILE__ ) );
 
@@ -153,36 +153,14 @@ function iala_jobs_meta_box_callback( $post ) {
     wp_nonce_field( 'iala_jobs_save_meta_box_data', 'iala_jobs_meta_box_nonce' );
 
     // Retrieve current values
-    $company_name     = get_post_meta( $post->ID, '_job_company', true );
-    $company_website  = get_post_meta( $post->ID, '_job_company_website', true );
-    $job_location     = get_post_meta( $post->ID, '_job_location', true );
-    $job_salary       = get_post_meta( $post->ID, '_job_salary', true );
-    $job_apply_link   = get_post_meta( $post->ID, '_job_apply_link', true );
-    
     $offer_types = get_post_meta( $post->ID, '_job_offer_types', true );
     if ( ! is_array( $offer_types ) ) {
         // Default to 'job' for new or existing listings
         $offer_types = array( 'job' );
     }
     ?>
-    <div class="iala-jobs-meta-fields" style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; padding: 10px;">
-        <p>
-            <label style="display: block; font-weight: 600; margin-bottom: 5px;" for="iala_job_company"><?php esc_html_e( 'Company Name', 'iala-jobs' ); ?></label>
-            <input type="text" id="iala_job_company" name="iala_job_company" value="<?php echo esc_attr( $company_name ); ?>" style="width: 100%; height: 35px; border-radius: 4px;" placeholder="e.g. PnsCode" />
-        </p>
-        <p>
-            <label style="display: block; font-weight: 600; margin-bottom: 5px;" for="iala_job_company_website"><?php esc_html_e( 'Company Website/URL', 'iala-jobs' ); ?></label>
-            <input type="url" id="iala_job_company_website" name="iala_job_company_website" value="<?php echo esc_url( $company_website ); ?>" style="width: 100%; height: 35px; border-radius: 4px;" placeholder="https://pnscode.com" />
-        </p>
-        <p>
-            <label style="display: block; font-weight: 600; margin-bottom: 5px;" for="iala_job_location"><?php esc_html_e( 'Job Location', 'iala-jobs' ); ?></label>
-            <input type="text" id="iala_job_location" name="iala_job_location" value="<?php echo esc_attr( $job_location ); ?>" style="width: 100%; height: 35px; border-radius: 4px;" placeholder="e.g. Remote / New York, NY" />
-        </p>
-        <p>
-            <label style="display: block; font-weight: 600; margin-bottom: 5px;" for="iala_job_salary"><?php esc_html_e( 'Salary / Compensation', 'iala-jobs' ); ?></label>
-            <input type="text" id="iala_job_salary" name="iala_job_salary" value="<?php echo esc_attr( $job_salary ); ?>" style="width: 100%; height: 35px; border-radius: 4px;" placeholder="e.g. $80k - $100k / year" />
-        </p>
-        <p style="grid-column: span 2; margin-bottom: 5px;">
+    <div class="iala-jobs-meta-fields" style="padding: 10px;">
+        <p style="margin-bottom: 5px;">
             <label style="display: block; font-weight: 600; margin-bottom: 8px;"><?php esc_html_e( 'Listing Offer Type', 'iala-jobs' ); ?></label>
             <label style="margin-right: 20px; font-weight: 500; cursor: pointer;">
                 <input type="checkbox" name="iala_job_offer_types[]" value="job" <?php checked( in_array( 'job', $offer_types ) ); ?> style="margin-right: 5px; vertical-align: middle;" /> 
@@ -192,10 +170,6 @@ function iala_jobs_meta_box_callback( $post ) {
                 <input type="checkbox" name="iala_job_offer_types[]" value="internship" <?php checked( in_array( 'internship', $offer_types ) ); ?> style="margin-right: 5px; vertical-align: middle;" /> 
                 <span style="vertical-align: middle;"><?php esc_html_e( 'Internship', 'iala-jobs' ); ?></span>
             </label>
-        </p>
-        <p style="grid-column: span 2; margin-top: 0;">
-            <label style="display: block; font-weight: 600; margin-bottom: 5px;" for="iala_job_apply_link"><?php esc_html_e( 'Application Email / URL', 'iala-jobs' ); ?></label>
-            <input type="text" id="iala_job_apply_link" name="iala_job_apply_link" value="<?php echo esc_attr( $job_apply_link ); ?>" style="width: 100%; height: 35px; border-radius: 4px;" placeholder="e.g. jobs@pnscode.com or https://pnscode.com/apply" />
         </p>
     </div>
     <?php
