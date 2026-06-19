@@ -102,19 +102,38 @@ if ( ! empty( $_GET['iala_cat'] ) ) {
                             </div>
 
                             <div class="iala-job-content-section">
+                                <div class="iala-job-top-meta-row">
+                                    <div class="iala-job-left-meta">
+                                        <span class="iala-job-meta-category">
+                                            <?php 
+                                            if ( ! empty( $job_cats ) && ! is_wp_error( $job_cats ) ) {
+                                                echo esc_html( strtoupper( $job_cats[0]->name ) ); 
+                                            } else {
+                                                echo esc_html__( 'JOBS', 'iala-jobs' );
+                                            }
+                                            ?>
+                                        </span>
+                                        <span class="iala-job-meta-separator">/</span>
+                                        <span class="iala-job-meta-author"><?php echo esc_html( strtoupper( get_the_author() ) ); ?></span>
+                                        <span class="iala-job-meta-separator">/</span>
+                                        <span class="iala-job-meta-date"><?php echo esc_html( strtoupper( get_the_date( 'j F Y' ) ) ); ?></span>
+                                    </div>
+                                    <?php if ( ! empty( $job_types ) && ! is_wp_error( $job_types ) ) : 
+                                        $type_name = $job_types[0]->name;
+                                        $type_slug = strtolower($job_types[0]->slug);
+                                        $badge_class = 'iala-job-status-badge';
+                                        if ( strpos($type_slug, 'expire') !== false || strpos($type_slug, 'close') !== false ) {
+                                            $badge_class .= ' status-expired';
+                                        }
+                                    ?>
+                                        <div class="iala-job-right-meta">
+                                            <span class="<?php echo esc_attr($badge_class); ?>"><?php echo esc_html( $type_name ); ?></span>
+                                        </div>
+                                    <?php endif; ?>
+                                </div>
                                 <h3 class="iala-job-title-new">
                                     <a href="<?php the_permalink(); ?>"><?php the_title(); ?></a>
                                 </h3>
-                                <div class="iala-job-meta-new">
-                                    <span class="iala-meta-item">
-                                        <span class="iala-meta-icon">🕒</span>
-                                        <?php echo get_the_date( 'F j, Y' ); ?>
-                                    </span>
-                                    <span class="iala-meta-item">
-                                        <span class="iala-meta-icon">✍️</span>
-                                        <?php echo get_the_author(); ?>
-                                    </span>
-                                </div>
                             </div>
                         <?php endif; ?>
                     </div>
