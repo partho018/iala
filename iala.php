@@ -3,7 +3,7 @@
  * Plugin Name: IALA Simple Jobs Post
  * Plugin URI: https://pnscode.com
  * Description: A premium, simple, and responsive jobs post plugin featuring custom taxonomies, job details meta-boxes, a stunning frontend job board shortcode, and dynamic filtering.
- * Version: 1.4.0
+ * Version: 1.5.0
  * Author: Raju
  * Author URI: https://pnscode.com
  * License: GPL2
@@ -15,7 +15,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 }
 
 // Define Constants
-define( 'IALA_JOBS_VERSION', '1.4.0' );
+define( 'IALA_JOBS_VERSION', '1.5.0' );
 define( 'IALA_JOBS_PATH', plugin_dir_path( __FILE__ ) );
 define( 'IALA_JOBS_URL', plugin_dir_url( __FILE__ ) );
 
@@ -222,7 +222,7 @@ add_action( 'save_post', 'iala_jobs_save_meta_box_data' );
  * 4. Enqueue Frontend Styles & Scripts
  */
 function iala_jobs_enqueue_scripts() {
-    wp_enqueue_style( 'iala-jobs-google-fonts', 'https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap', array(), null );
+    wp_enqueue_style( 'iala-jobs-google-fonts', 'https://fonts.googleapis.com/css2?family=Rethink+Sans:wght@400;500;600;700;800&display=swap', array(), null );
     wp_enqueue_style( 'iala-jobs-styles', IALA_JOBS_URL . 'css/style.css', array(), IALA_JOBS_VERSION );
     wp_enqueue_script( 'iala-jobs-scripts', IALA_JOBS_URL . 'js/script.js', array( 'jquery' ), IALA_JOBS_VERSION, true );
 }
