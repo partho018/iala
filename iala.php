@@ -3,7 +3,7 @@
  * Plugin Name: IALA Simple Jobs Post
  * Plugin URI: https://pnscode.com
  * Description: A premium, simple, and responsive jobs post plugin featuring custom taxonomies, job details meta-boxes, a stunning frontend job board shortcode, and dynamic filtering.
- * Version: 1.3.0
+ * Version: 1.4.0
  * Author: Raju
  * Author URI: https://pnscode.com
  * License: GPL2
@@ -15,7 +15,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 }
 
 // Define Constants
-define( 'IALA_JOBS_VERSION', '1.3.0' );
+define( 'IALA_JOBS_VERSION', '1.4.0' );
 define( 'IALA_JOBS_PATH', plugin_dir_path( __FILE__ ) );
 define( 'IALA_JOBS_URL', plugin_dir_url( __FILE__ ) );
 
@@ -818,6 +818,26 @@ function iala_jobs_auto_render_board_page( $content ) {
         }
     }
 
+    $blogs_page_id = get_option( 'iala_blogs_page_id', 0 );
+
+    // Blog Posts Board page context
+    if ( ! empty( $blogs_page_id ) && is_page( $blogs_page_id ) && in_the_loop() && is_main_query() ) {
+        $blogs_design_type = get_option( 'iala_blogs_design_type', 'default' );
+        $blogs_elementor_template = get_option( 'iala_blogs_elementor_template', 0 );
+
+        if ( $blogs_design_type === 'elementor' && ! empty( $blogs_elementor_template ) ) {
+            $rendering = true;
+            $output = iala_jobs_render_elementor_template( $blogs_elementor_template );
+            $rendering = false;
+            return $output;
+        } else {
+            $rendering = true;
+            $output = do_shortcode( '[iala_blogs]' );
+            $rendering = false;
+            return $output;
+        }
+    }
+
     return $content;
 }
 add_filter( 'the_content', 'iala_jobs_auto_render_board_page' );
@@ -1065,6 +1085,9 @@ function iala_jobs_settings_page_callback() {
         update_option( 'iala_blogs_card_elementor_template', intval( $_POST['iala_blogs_card_elementor_template'] ) );
         update_option( 'iala_blogs_posts_per_page', intval( $_POST['iala_blogs_posts_per_page'] ) );
         update_option( 'iala_blogs_override_default_archive', sanitize_text_field( $_POST['iala_blogs_override_default_archive'] ) );
+        update_option( 'iala_blogs_page_id', intval( $_POST['iala_blogs_page_id'] ) );
+        update_option( 'iala_blogs_design_type', sanitize_text_field( $_POST['iala_blogs_design_type'] ) );
+        update_option( 'iala_blogs_elementor_template', intval( $_POST['iala_blogs_elementor_template'] ) );
 
         echo '<div class="notice notice-success is-dismissible"><p>' . esc_html__( 'Settings saved successfully.', 'iala-jobs' ) . '</p></div>';
     }
@@ -1086,6 +1109,9 @@ function iala_jobs_settings_page_callback() {
     $blogs_card_elementor_template = get_option( 'iala_blogs_card_elementor_template', 0 );
     $blogs_posts_per_page = get_option( 'iala_blogs_posts_per_page', 10 );
     $blogs_override_default_archive = get_option( 'iala_blogs_override_default_archive', 'no' );
+    $blogs_page_id = get_option( 'iala_blogs_page_id', 0 );
+    $blogs_design_type = get_option( 'iala_blogs_design_type', 'default' );
+    $blogs_elementor_template = get_option( 'iala_blogs_elementor_template', 0 );
 
     $wp_pages = get_pages();
 
@@ -1407,6 +1433,71 @@ function iala_jobs_settings_page_callback() {
                 </table>
             </div>
 
+            <!-- Blog Posts Page Settings Section -->
+            <div class="iala-settings-section" style="background: #ffffff; padding: 25px; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); margin-bottom: 25px; max-width: 800px; border: 1px solid #e2e8f0;">
+                <h2 style="margin-top: 0; font-size: 1.4rem; border-bottom: 1px solid #e2e8f0; padding-bottom: 12px; color: #0f172a;"><?php esc_html_e( 'Blog Posts Page Settings', 'iala-jobs' ); ?></h2>
+                
+                <table class="form-table" role="presentation" style="width: 100%; border-collapse: collapse; margin-top: 15px;">
+                    <tr>
+                        <th scope="row" style="width: 30%; font-weight: 600; padding: 15px 10px 15px 0; vertical-align: top; text-align: left;">
+                            <label for="iala_blogs_page_id"><?php esc_html_e( 'Select Blog Posts Page', 'iala-jobs' ); ?></label>
+                        </th>
+                        <td style="padding: 15px 10px;">
+                            <?php if ( ! empty( $wp_pages ) ) : ?>
+                                <select id="iala_blogs_page_id" name="iala_blogs_page_id" style="width: 100%; max-width: 400px; height: 40px; border-radius: 6px; border: 1px solid #cbd5e1;">
+                                    <option value="0"><?php esc_html_e( '— Select a Page —', 'iala-jobs' ); ?></option>
+                                    <?php foreach ( $wp_pages as $page ) : ?>
+                                        <option value="<?php echo esc_attr( $page->ID ); ?>" <?php selected( $blogs_page_id, $page->ID ); ?>><?php echo esc_html( $page->post_title ); ?></option>
+                                    <?php endforeach; ?>
+                                </select>
+                            <?php else : ?>
+                                <p style="color: #ef4444; font-weight: 500;">
+                                    <?php esc_html_e( 'No WordPress pages found. Please create one under Pages -> Add New first.', 'iala-jobs' ); ?>
+                                </p>
+                            <?php endif; ?>
+                            <p class="description" style="color: #64748b; margin-top: 8px; font-size: 0.9rem;">
+                                Select the page where the designed Blog Cards list should be automatically displayed.
+                            </p>
+                        </td>
+                    </tr>
+                    
+                    <tr>
+                        <th scope="row" style="width: 30%; font-weight: 600; padding: 15px 10px 15px 0; vertical-align: top; text-align: left;">
+                            <label for="iala_blogs_design_type"><?php esc_html_e( 'Blog Posts Page Design Option', 'iala-jobs' ); ?></label>
+                        </th>
+                        <td style="padding: 15px 10px;">
+                            <select id="iala_blogs_design_type" name="iala_blogs_design_type" style="width: 100%; max-width: 400px; height: 40px; border-radius: 6px; border: 1px solid #cbd5e1;" onchange="toggleBlogsPageTemplateSelect(this.value)">
+                                <option value="default" <?php selected( $blogs_design_type, 'default' ); ?>><?php esc_html_e( 'Built-in Premium Blogs Board', 'iala-jobs' ); ?></option>
+                                <option value="elementor" <?php selected( $blogs_design_type, 'elementor' ); ?>><?php esc_html_e( 'Custom Elementor Template', 'iala-jobs' ); ?></option>
+                            </select>
+                            <p class="description" style="color: #64748b; margin-top: 8px; font-size: 0.9rem;">
+                                Select if you want to use the default blogs board layout or a custom layout designed in Elementor for the entire page.
+                            </p>
+                        </td>
+                    </tr>
+                    
+                    <tr id="blogs-template-row" style="<?php echo $blogs_design_type === 'elementor' ? '' : 'display: none;'; ?>">
+                        <th scope="row" style="width: 30%; font-weight: 600; padding: 15px 10px 15px 0; vertical-align: top; text-align: left;">
+                            <label for="iala_blogs_elementor_template"><?php esc_html_e( 'Select Elementor Template', 'iala-jobs' ); ?></label>
+                        </th>
+                        <td style="padding: 15px 10px;">
+                            <?php if ( ! empty( $elementor_templates ) ) : ?>
+                                <select id="iala_blogs_elementor_template" name="iala_blogs_elementor_template" style="width: 100%; max-width: 400px; height: 40px; border-radius: 6px; border: 1px solid #cbd5e1;">
+                                    <option value="0"><?php esc_html_e( '— Select a Template —', 'iala-jobs' ); ?></option>
+                                    <?php foreach ( $elementor_templates as $tmpl ) : ?>
+                                        <option value="<?php echo esc_attr( $tmpl->ID ); ?>" <?php selected( $blogs_elementor_template, $tmpl->ID ); ?>><?php echo esc_html( $tmpl->post_title ); ?></option>
+                                    <?php endforeach; ?>
+                                </select>
+                            <?php else : ?>
+                                <p style="color: #ef4444; font-weight: 500;">
+                                    <?php esc_html_e( 'No Elementor templates found. Please create one under Templates -> Saved Templates first.', 'iala-jobs' ); ?>
+                                </p>
+                            <?php endif; ?>
+                        </td>
+                    </tr>
+                </table>
+            </div>
+
             <!-- Shortcode Reference Box -->
             <div class="iala-settings-section" style="background: #f8fafc; padding: 25px; border-radius: 12px; max-width: 800px; border: 1px solid #e2e8f0; margin-bottom: 25px;">
                 <h3 style="margin-top:0; font-size: 1.1rem; color: #0f172a;"><?php esc_html_e( 'Shortcodes & Template Integration', 'iala-jobs' ); ?></h3>
@@ -1471,6 +1562,14 @@ function iala_jobs_settings_page_callback() {
         }
         function toggleBlogsCardTemplateSelect(val) {
             var row = document.getElementById('blogs-card-template-row');
+            if (val === 'elementor') {
+                row.style.display = '';
+            } else {
+                row.style.display = 'none';
+            }
+        }
+        function toggleBlogsPageTemplateSelect(val) {
+            var row = document.getElementById('blogs-template-row');
             if (val === 'elementor') {
                 row.style.display = '';
             } else {
